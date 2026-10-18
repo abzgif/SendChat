@@ -18,6 +18,8 @@ kotlin {
             implementation(compose.desktop.macos_arm64)
             implementation(compose.desktop.macos_x64)
             implementation(compose.desktop.windows_x64)
+            implementation(compose.desktop.linux_x64)
+            implementation(compose.desktop.linux_arm64)
             implementation(libs.kotlinx.coroutines.swing)
         }
     }
@@ -33,7 +35,8 @@ compose.desktop {
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Pkg,
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Exe,
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Rpm
             )
             packageName = "SendChat"
             packageVersion = "1.0.0"
@@ -69,6 +72,13 @@ compose.desktop {
                 packageVersion = "1.0.0"
                 menuGroup = "SendChat"
                 upgradeUuid = "6b4b4553-7393-4e31-89d8-94f31b5c98d1"
+            }
+
+            linux {
+                iconFile.set(project.file("src/jvmMain/resources/icon.png"))
+                packageVersion = "1.0.0"
+                appCategory = "Network"
+                menuGroup = "Network"
             }
         }
     }
