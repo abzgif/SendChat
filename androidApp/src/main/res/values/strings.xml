@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SendChat</string>
+    <string name="notification_channel_name">SendChat Service</string>
+    <string name="notification_channel_desc">Keeps SendChat active for background discovery and file receiving</string>
+</resources>

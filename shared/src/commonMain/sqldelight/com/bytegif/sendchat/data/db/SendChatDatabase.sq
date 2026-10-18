@@ -1,0 +1,128 @@
+CREATE TABLE paired_device_entity (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    platform TEXT NOT NULL,
+    publicKeyFingerprint TEXT NOT NULL,
+    lastKnownIp TEXT NOT NULL,
+    lastKnownPort INTEGER NOT NULL,
+    pairedAt INTEGER NOT NULL,
+    autoSyncClipboard INTEGER NOT NULL DEFAULT 0,
+    isMuted INTEGER NOT NULL DEFAULT 0
+);
+
+selectAllPairedDevices:
+SELECT * FROM paired_device_entity ORDER BY pairedAt DESC;
+
+selectPairedDeviceById:
+SELECT * FROM paired_device_entity WHERE id = ?;
+
+insertOrReplacePairedDevice:
+INSERT OR REPLACE INTO paired_device_entity (id, name, platform, publicKeyFingerprint, lastKnownIp, lastKnownPort, pairedAt, autoSyncClipboard, isMuted)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updatePairedDeviceName:
+UPDATE paired_device_entity SET name = ? WHERE id = ?;
+
+updatePairedDeviceLastSeen:
+UPDATE paired_device_entity SET lastKnownIp = ?, lastKnownPort = ? WHERE id = ?;
+
+updatePairedDeviceClipboardSync:
+UPDATE paired_device_entity SET autoSyncClipboard = ? WHERE id = ?;
+
+updatePairedDeviceMute:
+UPDATE paired_device_entity SET isMuted = ? WHERE id = ?;
+
+deletePairedDevice:
+DELETE FROM paired_device_entity WHERE id = ?;
+
+-- Messages
+CREATE TABLE message_entity (
+    id TEXT PRIMARY KEY NOT NULL,
+    deviceId TEXT NOT NULL,
+    contentType TEXT NOT NULL,
+    bodyText TEXT,
+    fileName TEXT,
+    fileSize INTEGER,
+    filePath TEXT,
+    mimeType TEXT,
+    fileHash TEXT,
+    thumbnailBase64 TEXT,
+    imageWidth INTEGER,
+    imageHeight INTEGER,
+    direction TEXT NOT NULL,
+    statusCode TEXT NOT NULL,
+    progress REAL NOT NULL DEFAULT 0.0,
+    bytesTransferred INTEGER NOT NULL DEFAULT 0,
+    totalBytes INTEGER NOT NULL DEFAULT 0,
+    failureReason TEXT,
+    timestamp INTEGER NOT NULL
+);
+
+selectMessagesForDevice:
+SELECT * FROM message_entity WHERE deviceId = ? ORDER BY timestamp ASC;
+
+selectLastMessageForDevice:
+SELECT * FROM message_entity WHERE deviceId = ? ORDER BY timestamp DESC LIMIT 1;
+
+selectMessageById:
+SELECT * FROM message_entity WHERE id = ?;
+
+insertOrReplaceMessage:
+INSERT OR REPLACE INTO message_entity (
+    id, deviceId, contentType, bodyText, fileName, fileSize, filePath, mimeType, fileHash,
+    thumbnailBase64, imageWidth, imageHeight, direction, statusCode, progress,
+    bytesTransferred, totalBytes, failureReason, timestamp
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateMessageStatus:
+UPDATE message_entity
+SET statusCode = ?, progress = ?, bytesTransferred = ?, totalBytes = ?, failureReason = ?
+WHERE id = ?;
+
+updateMessageFilePath:
+UPDATE message_entity
+SET filePath = ?
+WHERE id = ?;
+
+deleteMessage:
+DELETE FROM message_entity WHERE id = ?;
+
+clearMessagesForDevice:
+DELETE FROM message_entity WHERE deviceId = ?;
+
+-- App Settings
+CREATE TABLE settings_entity (
+    id INTEGER PRIMARY KEY NOT NULL DEFAULT 1,
+    deviceId TEXT NOT NULL,
+    deviceName TEXT NOT NULL,
+    themeMode TEXT NOT NULL DEFAULT 'SYSTEM',
+    downloadDirectory TEXT NOT NULL DEFAULT '',
+    port INTEGER NOT NULL DEFAULT 42831,
+    autoSyncClipboardGlobal INTEGER NOT NULL DEFAULT 0,
+    autoStartOnBoot INTEGER NOT NULL DEFAULT 0
+);
+
+selectSettings:
+SELECT * FROM settings_entity WHERE id = 1 LIMIT 1;
+
+insertOrReplaceSettings:
+INSERT OR REPLACE INTO settings_entity (
+    id, deviceId, deviceName, themeMode, downloadDirectory, port, autoSyncClipboardGlobal, autoStartOnBoot
+)
+VALUES (1, ?, ?, ?, ?, ?, ?, ?);
+
+updateDeviceName:
+UPDATE settings_entity SET deviceName = ? WHERE id = 1;
+
+updateThemeMode:
+UPDATE settings_entity SET themeMode = ? WHERE id = 1;
+
+updateDownloadDirectory:
+UPDATE settings_entity SET downloadDirectory = ? WHERE id = 1;
+
+updateAutoSyncClipboard:
+UPDATE settings_entity SET autoSyncClipboardGlobal = ? WHERE id = 1;
+
+updateAutoStartOnBoot:
+UPDATE settings_entity SET autoStartOnBoot = ? WHERE id = 1;
