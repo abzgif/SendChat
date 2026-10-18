@@ -28,7 +28,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Package Windows EXE and MSI
-        run: ./gradlew :desktopApp:packageExe :desktopApp:packageMsi
+        run: ./gradlew :desktopApp:packageExe :desktopApp:packageMsi --stacktrace
 
       - name: Upload Windows Executable Artifacts
         uses: actions/upload-artifact@v4
@@ -56,7 +56,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Package macOS DMG
-        run: ./gradlew :desktopApp:packageDmg
+        run: ./gradlew :desktopApp:packageDmg --stacktrace
 
       - name: Upload macOS DMG Artifact
         uses: actions/upload-artifact@v4
@@ -87,7 +87,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Package Linux DEB and RPM
-        run: ./gradlew :desktopApp:packageDeb :desktopApp:packageRpm
+        run: ./gradlew :desktopApp:packageDeb :desktopApp:packageRpm --stacktrace
 
       - name: Upload Linux Packages
         uses: actions/upload-artifact@v4

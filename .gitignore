@@ -1,18 +1,38 @@
-*.iml
-.gradle
-/local.properties
+# Gradle & Kotlin
+.gradle/
+build/
+**/build/
+.kotlin/
+
+# IDE & Editor
 .idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# Local Environment & SDK configuration
+local.properties
+**/local.properties
+
+# OS files
 .DS_Store
-/build
-/androidApp/build
-/desktopApp/build
-/shared/build
-captures
-.externalNativeBuild
-.cxx
+Thumbs.db
+
+# Android builds
+captures/
+.externalNativeBuild/
+.cxx/
 *.apk
 *.aab
+
+# Desktop packaged binaries
 *.dmg
 *.pkg
 *.msi
 *.exe
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+desktopApp/build/compose/
