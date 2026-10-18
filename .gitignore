@@ -3,6 +3,8 @@
 build/
 **/build/
 .kotlin/
+*.log
+*.hprof
 
 # IDE & Editor
 .idea/
@@ -34,5 +36,7 @@ captures/
 *.deb
 *.rpm
 *.tar.gz
-*.zip
 desktopApp/build/compose/
+
+# Keep project resource zips
+!shared/src/jvmMain/resources/**/*.zip
