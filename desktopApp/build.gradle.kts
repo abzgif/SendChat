@@ -44,21 +44,7 @@ compose.desktop {
             copyright = "© 2026 ByteGif"
             vendor = "ByteGif"
 
-            modules(
-                "java.base",
-                "java.desktop",
-                "java.logging",
-                "java.prefs",
-                "java.sql",
-                "java.xml",
-                "java.naming",
-                "java.management",
-                "java.datatransfer",
-                "java.instrument",
-                "java.net.http",
-                "jdk.unsupported",
-                "jdk.crypto.ec"
-            )
+            includeAllModules = true
 
             macOS {
                 bundleID = "com.bytegif.sendchat"
@@ -84,14 +70,5 @@ compose.desktop {
     }
 }
 
-tasks.matching { it.name.contains("Distributable") || it.name.contains("AppImage") }.configureEach {
-    doLast {
-        fileTree(layout.buildDirectory.dir("compose/binaries")) {
-            include("**/*.cfg")
-        }.forEach { cfg ->
-            val updated = cfg.readLines().filterNot { it.contains("-Dskiko.library.path") }.joinToString("\n")
-            cfg.writeText(updated)
-        }
-    }
-}
+
 

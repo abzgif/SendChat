@@ -25,45 +25,58 @@ import java.awt.dnd.DropTargetDropEvent
 import java.io.File
 import javax.imageio.ImageIO
 
-fun main() = application {
-    val trayState = rememberTrayState()
-    val windowState = rememberWindowState(width = 1050.dp, height = 720.dp)
-    val driverFactory = remember { DriverFactory() }
-    val container = remember { AppContainer(driverFactory) }
-
-    val appIcon = remember {
+fun main() {
+    Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
         runCatching {
-            val stream = object {}.javaClass.getResourceAsStream("/icon.png")
-            if (stream != null) {
-                val bufferedImage = ImageIO.read(stream)
-                bufferedImage?.toComposeImageBitmap()
-            } else null
-        }.getOrNull()
+            val userHome = System.getProperty("user.home", ".")
+            val logFile = File(userHome, "SendChat-crash.log")
+            logFile.writeText("SendChat Crash on thread [${thread.name}]:\n${throwable.stackTraceToString()}\n")
+        }
+        throwable.printStackTrace()
     }
 
-    val trayIcon = remember {
-        runCatching {
-            val stream = object {}.javaClass.getResourceAsStream("/tray_icon.png")
-                ?: object {}.javaClass.getResourceAsStream("/icon.png")
-            if (stream != null) {
-                val bufferedImage = ImageIO.read(stream)
-                bufferedImage?.toComposeImageBitmap()
-            } else null
-        }.getOrNull()
-    }
+    application {
+        val trayState = rememberTrayState()
+        val windowState = rememberWindowState(width = 1050.dp, height = 720.dp)
+        val driverFactory = remember { DriverFactory() }
+        val container = remember { AppContainer(driverFactory) }
 
-    val iconPainter = appIcon?.let { BitmapPainter(it) }
-    val trayPainter = trayIcon?.let { BitmapPainter(it) } ?: iconPainter
+        val appIcon = remember {
+            runCatching {
+                val stream = object {}.javaClass.getResourceAsStream("/icon.png")
+                if (stream != null) {
+                    val bufferedImage = ImageIO.read(stream)
+                    bufferedImage?.toComposeImageBitmap()
+                } else null
+            }.getOrNull()
+        }
 
+        val trayIcon = remember {
+            runCatching {
+                val stream = object {}.javaClass.getResourceAsStream("/tray_icon.png")
+                    ?: object {}.javaClass.getResourceAsStream("/icon.png")
+                if (stream != null) {
+                    val bufferedImage = ImageIO.read(stream)
+                    bufferedImage?.toComposeImageBitmap()
+                } else null
+            }.getOrNull()
+        }
 
-    if (trayPainter != null) {
-        Tray(
-            state = trayState,
-            icon = trayPainter,
-            tooltip = "SendChat",
-            onAction = {}
-        )
-    }
+        val iconPainter = appIcon?.let { BitmapPainter(it) }
+        val trayPainter = trayIcon?.let { BitmapPainter(it) } ?: iconPainter
+
+        val isTraySupported = remember {
+            runCatching { java.awt.SystemTray.isSupported() }.getOrDefault(false)
+        }
+
+        if (isTraySupported && trayPainter != null) {
+            Tray(
+                state = trayState,
+                icon = trayPainter,
+                tooltip = "SendChat",
+                onAction = {}
+            )
+        }
 
     Window(
         onCloseRequest = ::exitApplication,
@@ -176,4 +189,5 @@ fun main() = application {
             }
         )
     }
+}
 }
