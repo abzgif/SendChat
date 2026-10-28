@@ -26,6 +26,11 @@ import java.io.File
 import javax.imageio.ImageIO
 
 fun main() {
+    // Keep native macOS window chrome aligned with the app's dark desktop appearance.
+    if (System.getProperty("os.name", "").lowercase().contains("mac")) {
+        System.setProperty("apple.awt.application.appearance", "NSAppearanceNameDarkAqua")
+    }
+
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
         runCatching {
             val userHome = System.getProperty("user.home", ".")

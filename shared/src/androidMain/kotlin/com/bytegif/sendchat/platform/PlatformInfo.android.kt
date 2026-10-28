@@ -110,32 +110,31 @@ actual object PlatformInfo {
                 android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
             } else null ?: context.contentResolver.getType(uri) ?: "*/*"
 
-            // APK files MUST be launched directly with PackageInstaller without Intent.createChooser
             if (ext == "apk" || mimeType == "application/vnd.android.package-archive") {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    if (!context.packageManager.canRequestPackageInstalls()) {
-                        val settingsIntent = Intent(
-                            android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                            android.net.Uri.parse("package:${context.packageName}")
-                        ).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                        context.startActivity(settingsIntent)
-                        android.widget.Toast.makeText(
-                            context,
-                            "Please allow SendChat to install unknown apps, then tap the APK again",
-                            android.widget.Toast.LENGTH_LONG
-                        ).show()
-                        return
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                    !context.packageManager.canRequestPackageInstalls()
+                ) {
+                    val settingsIntent = Intent(
+                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:${context.packageName}")
+                    ).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
+                    context.startActivity(settingsIntent)
+                    android.widget.Toast.makeText(
+                        context,
+                        "Allow SendChat to install unknown apps, then open the APK again.",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                    return
                 }
 
-                val apkIntent = Intent(Intent.ACTION_VIEW).apply {
+                val installIntent = Intent(Intent.ACTION_VIEW).apply {
                     setDataAndType(uri, "application/vnd.android.package-archive")
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
-                context.startActivity(apkIntent)
+                context.startActivity(installIntent)
                 return
             }
 

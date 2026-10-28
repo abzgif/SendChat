@@ -50,6 +50,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -73,6 +74,8 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -197,7 +200,7 @@ fun MessageBubble(
             shape = bubbleShape,
             color = bubbleColor,
             border = androidx.compose.foundation.BorderStroke(1.dp, bubbleBorder),
-            modifier = Modifier.widthIn(max = 420.dp),
+            modifier = Modifier.widthIn(max = 560.dp),
             tonalElevation = if (isSent) 2.dp else 0.dp
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
@@ -218,7 +221,7 @@ fun MessageBubble(
                             Box {
                                 IconButton(
                                     onClick = { menuExpanded = true },
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(28.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.MoreVert,
@@ -231,7 +234,12 @@ fun MessageBubble(
                                 DropdownMenu(
                                     expanded = menuExpanded,
                                     onDismissRequest = { menuExpanded = false },
-                                    modifier = Modifier.widthIn(min = 160.dp)
+                                    modifier = Modifier.widthIn(min = 180.dp),
+                                    shape = RoundedCornerShape(18.dp),
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    tonalElevation = 0.dp,
+                                    shadowElevation = 4.dp,
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                                 ) {
                                     DropdownMenuItem(
                                         text = { Text("Copy Text") },
@@ -496,19 +504,26 @@ fun MessageBubble(
                     }
 
                     is MessageContent.ImageAttachment -> {
-                        val imageBitmap = remember(content.filePath, content.thumbnailBase64) {
-                            if (content.filePath.isNotBlank()) {
-                                ImageBitmapLoader.loadFromPath(content.filePath)
-                            } else if (!content.thumbnailBase64.isNullOrBlank()) {
-                                ImageBitmapLoader.loadFromBase64(content.thumbnailBase64)
-                            } else null
+                        val imageBitmap by produceState<androidx.compose.ui.graphics.ImageBitmap?>(
+                            initialValue = null,
+                            key1 = content.filePath,
+                            key2 = content.thumbnailBase64
+                        ) {
+                            value = withContext(Dispatchers.IO) {
+                                val fromFile = content.filePath
+                                    .takeIf { it.isNotBlank() }
+                                    ?.let { ImageBitmapLoader.loadFromPath(it) }
+                                fromFile ?: content.thumbnailBase64
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?.let { ImageBitmapLoader.loadFromBase64(it) }
+                            }
                         }
 
                         Column {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = 160.dp, max = 260.dp)
+                                    .heightIn(min = 160.dp, max = 320.dp)
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(onBubbleColor.copy(alpha = 0.08f))
                                     .dragAndDropFileExport(content.filePath)
@@ -522,14 +537,14 @@ fun MessageBubble(
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
-                                if (imageBitmap != null) {
+                                imageBitmap?.let { bitmap ->
                                     Image(
-                                        bitmap = imageBitmap,
+                                        bitmap = bitmap,
                                         contentDescription = content.fileName,
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier.fillMaxSize()
                                     )
-                                } else {
+                                } ?: run {
                                     Icon(
                                         imageVector = Icons.Default.Image,
                                         contentDescription = "Image preview",

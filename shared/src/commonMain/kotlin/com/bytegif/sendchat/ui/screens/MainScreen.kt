@@ -27,6 +27,7 @@ import com.bytegif.sendchat.viewmodel.ChatViewModel
 import com.bytegif.sendchat.viewmodel.DeviceListViewModel
 import com.bytegif.sendchat.viewmodel.PairingViewModel
 import com.bytegif.sendchat.viewmodel.SettingsViewModel
+import com.bytegif.sendchat.viewmodel.UpdateViewModel
 
 import com.bytegif.sendchat.ui.util.BackHandler
 import com.bytegif.sendchat.ui.util.onExternalFileDrop
@@ -43,6 +44,7 @@ fun MainScreen(
     chatViewModel: ChatViewModel,
     pairingViewModel: PairingViewModel,
     settingsViewModel: SettingsViewModel,
+    updateViewModel: UpdateViewModel,
     onPickFiles: () -> Unit,
     onPickImages: () -> Unit,
     onPickDownloadDir: (() -> Unit)? = null,
@@ -179,6 +181,7 @@ fun MainScreen(
                         if (showSettings) {
                             SettingsScreen(
                                 viewModel = settingsViewModel,
+                                updateViewModel = updateViewModel,
                                 onBack = { showSettings = false },
                                 onPickDownloadDir = onPickDownloadDir
                             )
@@ -232,6 +235,7 @@ fun MainScreen(
                     MobileCurrentScreen.SETTINGS -> {
                         SettingsScreen(
                             viewModel = settingsViewModel,
+                            updateViewModel = updateViewModel,
                             onBack = { mobileScreen = MobileCurrentScreen.DEVICE_LIST },
                             onPickDownloadDir = onPickDownloadDir
                         )

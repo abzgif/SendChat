@@ -22,6 +22,7 @@ import com.bytegif.sendchat.viewmodel.ChatViewModel
 import com.bytegif.sendchat.viewmodel.DeviceListViewModel
 import com.bytegif.sendchat.viewmodel.PairingViewModel
 import com.bytegif.sendchat.viewmodel.SettingsViewModel
+import com.bytegif.sendchat.viewmodel.UpdateViewModel
 
 class AppContainer(driverFactory: DriverFactory) {
     val database = createDatabase(driverFactory)
@@ -64,6 +65,7 @@ class AppContainer(driverFactory: DriverFactory) {
     val chatViewModel = ChatViewModel(messageRepository, deviceRepository, transferManager, clipboardManager)
     val pairingViewModel = PairingViewModel(settingsRepository, transferManager)
     val settingsViewModel = SettingsViewModel(settingsRepository)
+    val updateViewModel = UpdateViewModel()
 }
 
 @Composable
@@ -85,6 +87,7 @@ fun App(
             chatViewModel = container.chatViewModel,
             pairingViewModel = container.pairingViewModel,
             settingsViewModel = container.settingsViewModel,
+            updateViewModel = container.updateViewModel,
             onPickFiles = onPickFiles,
             onPickImages = onPickImages,
             onPickDownloadDir = onPickDownloadDir,

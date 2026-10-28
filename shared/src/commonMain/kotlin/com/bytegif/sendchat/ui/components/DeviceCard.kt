@@ -73,29 +73,29 @@ fun DeviceCard(
     val borderColor = if (isSelected) {
         MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
     } else {
-        MaterialTheme.colorScheme.outlineVariant
+        Color.Transparent
     }
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(20.dp),
         color = containerColor,
         border = androidx.compose.foundation.BorderStroke(1.dp, borderColor),
-        tonalElevation = if (isSelected) 3.dp else 0.dp
+        tonalElevation = if (isSelected) 2.dp else 0.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Platform Icon Avatar with soft tinted background
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(42.dp)
                     .clip(CircleShape)
                     .background(
                         if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
@@ -113,7 +113,7 @@ fun DeviceCard(
                 // Online indicator badge with clean white/dark outline
                 Box(
                     modifier = Modifier
-                        .size(13.dp)
+                    .size(12.dp)
                         .align(Alignment.BottomEnd)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surface)
@@ -200,18 +200,45 @@ fun DeviceCard(
                 }
             } else {
                 Box {
-                    IconButton(onClick = { menuExpanded = true }) {
+                    IconButton(
+                        onClick = { menuExpanded = true },
+                        modifier = Modifier.size(36.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "Device Options",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(19.dp)
                         )
                     }
 
                     DropdownMenu(
                         expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false }
+                        onDismissRequest = { menuExpanded = false },
+                        modifier = Modifier.width(248.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        tonalElevation = 0.dp,
+                        shadowElevation = 4.dp,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
+                        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp)) {
+                            Text(
+                                text = device.name,
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = if (device.isOnline) "Connected now" else "Saved device",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        androidx.compose.material3.HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
                         if (onToggleMute != null) {
                             DropdownMenuItem(
                                 text = { Text(if (device.isMuted) "Unmute Notification Sound" else "Mute Notification Sound") },

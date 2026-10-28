@@ -5,6 +5,13 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+val appVersion = providers.gradleProperty("appVersion").orElse("1.1.0").get()
+val appVersionParts = appVersion.removePrefix("v").substringBefore('-').split('.')
+    .map { it.toIntOrNull() ?: 0 }
+val appVersionCode = appVersionParts.getOrElse(0) { 0 } * 1_000_000 +
+    appVersionParts.getOrElse(1) { 0 } * 1_000 +
+    appVersionParts.getOrElse(2) { 0 }
+
 android {
     namespace = "com.bytegif.sendchat.android"
     compileSdk = 35
@@ -13,8 +20,8 @@ android {
         applicationId = "com.bytegif.sendchat"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = appVersionCode
+        versionName = appVersion.removePrefix("v")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

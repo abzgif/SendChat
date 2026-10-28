@@ -1,4 +1,4 @@
-name: Build Desktop Releases
+name: Build SendChat Releases
 
 on:
   push:
@@ -32,7 +32,13 @@ jobs:
         shell: pwsh
 
       - name: Package Windows EXE and MSI
-        run: ./gradlew.bat :desktopApp:packageExe :desktopApp:packageMsi --stacktrace
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq "tag") {
+            $version = $env:GITHUB_REF_NAME -replace '^v', ''
+            ./gradlew.bat :desktopApp:packageExe :desktopApp:packageMsi "-PappVersion=$version" --stacktrace
+          } else {
+            ./gradlew.bat :desktopApp:packageExe :desktopApp:packageMsi --stacktrace
+          }
         shell: pwsh
 
       - name: Upload Windows Executable Artifacts
@@ -44,7 +50,7 @@ jobs:
             desktopApp/build/compose/binaries/main/msi/*
 
   build-macos:
-    name: Build macOS DMG
+    name: Build macOS installers
     runs-on: macos-latest
 
     steps:
@@ -63,14 +69,21 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Package macOS DMG
-        run: ./gradlew :desktopApp:packageDmg --stacktrace
+      - name: Package macOS DMG and PKG
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            ./gradlew :desktopApp:packageDmg :desktopApp:packagePkg "-PappVersion=${GITHUB_REF_NAME#v}" --stacktrace
+          else
+            ./gradlew :desktopApp:packageDmg :desktopApp:packagePkg --stacktrace
+          fi
 
       - name: Upload macOS DMG Artifact
         uses: actions/upload-artifact@v4
         with:
           name: SendChat-macOS
-          path: desktopApp/build/compose/binaries/main/dmg/*
+          path: |
+            desktopApp/build/compose/binaries/main/dmg/*
+            desktopApp/build/compose/binaries/main/pkg/*
 
   build-linux:
     name: Build Linux DEB / RPM
@@ -98,7 +111,12 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Package Linux DEB and RPM
-        run: ./gradlew :desktopApp:packageDeb :desktopApp:packageRpm --stacktrace
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            ./gradlew :desktopApp:packageDeb :desktopApp:packageRpm "-PappVersion=${GITHUB_REF_NAME#v}" --stacktrace
+          else
+            ./gradlew :desktopApp:packageDeb :desktopApp:packageRpm --stacktrace
+          fi
 
       - name: Upload Linux Packages
         uses: actions/upload-artifact@v4
@@ -139,6 +157,7 @@ jobs:
             artifacts/**/*.exe
             artifacts/**/*.msi
             artifacts/**/*.dmg
+            artifacts/**/*.pkg
             artifacts/**/*.deb
             artifacts/**/*.rpm
           draft: false

@@ -7,6 +7,11 @@ plugins {
     alias(libs.plugins.sqldelight)
 }
 
+val appVersion = providers.gradleProperty("appVersion").orElse("1.1.0").get()
+tasks.withType<Jar>().configureEach {
+    manifest.attributes["Implementation-Version"] = appVersion
+}
+
 kotlin {
     jvmToolchain(17)
     compilerOptions {
@@ -51,11 +56,6 @@ kotlin {
 
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
-            implementation(compose.desktop.macos_arm64)
-            implementation(compose.desktop.macos_x64)
-            implementation(compose.desktop.windows_x64)
-            implementation(compose.desktop.linux_x64)
-            implementation(compose.desktop.linux_arm64)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.sqldelight.sqlite.driver)
             implementation(libs.jmdns)

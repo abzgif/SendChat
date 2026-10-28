@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import com.bytegif.sendchat.ui.components.AppLogo
+import com.bytegif.sendchat.domain.model.DevicePlatform
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Brightness4
@@ -31,8 +32,10 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -61,6 +64,9 @@ import androidx.compose.ui.unit.sp
 import com.bytegif.sendchat.domain.model.ThemeMode
 import com.bytegif.sendchat.platform.PlatformInfo
 import com.bytegif.sendchat.viewmodel.SettingsViewModel
+import com.bytegif.sendchat.viewmodel.AppVersion
+import com.bytegif.sendchat.viewmodel.UpdateState
+import com.bytegif.sendchat.viewmodel.UpdateViewModel
 
 import androidx.compose.foundation.layout.navigationBarsPadding
 
@@ -68,11 +74,13 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
+    updateViewModel: UpdateViewModel,
     onBack: () -> Unit,
     onPickDownloadDir: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val settings by viewModel.settings.collectAsState()
+    val updateState by updateViewModel.state.collectAsState()
     var editName by remember(settings.deviceName) { mutableStateOf(settings.deviceName) }
 
     Surface(
@@ -288,6 +296,113 @@ fun SettingsScreen(
                     }
                 }
 
+                if (PlatformInfo.platform != DevicePlatform.ANDROID) SettingsCard(title = "APP UPDATES", icon = Icons.Default.SystemUpdateAlt) {
+                    val isBusy = updateState is UpdateState.Checking || updateState is UpdateState.Downloading
+                    val actionLabel = when (val state = updateState) {
+                        UpdateState.PlayStoreManaged -> "Managed by Google Play"
+                        UpdateState.Idle, is UpdateState.Failed -> "Check for updates"
+                        UpdateState.Checking -> "Checking GitHub…"
+                        is UpdateState.UpToDate -> "Check again"
+                        is UpdateState.Available -> "Download ${state.release.version}"
+                        is UpdateState.Downloading -> "Downloading update…"
+                        is UpdateState.ReadyToInstall -> "Install update"
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = "Current version: ${AppVersion.current}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        when (val state = updateState) {
+                            UpdateState.PlayStoreManaged -> Text(
+                                text = "Android app updates are delivered through Google Play. Install SendChat from the Play Store to receive verified updates.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            UpdateState.Idle -> Text(
+                                text = "Check GitHub releases for the latest SendChat version.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            UpdateState.Checking -> Text(
+                                text = "Looking for the latest stable release…",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            is UpdateState.UpToDate -> Text(
+                                text = "You’re up to date. Latest version: ${state.latestVersion}.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            is UpdateState.Available -> {
+                                Text(
+                                    text = "${state.release.title} is ready to download.",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                if (state.release.notes.isNotBlank()) {
+                                    Text(
+                                        text = state.release.notes,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 5,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                            is UpdateState.Downloading -> {
+                                val percent = state.progress?.times(100f)?.toInt()
+                                Text(
+                                    text = if (percent != null) "Downloading ${state.release.version} · $percent%" else "Downloading ${state.release.version}…",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            is UpdateState.ReadyToInstall -> Text(
+                                text = if (state.release.asset.name.endsWith(".dmg", ignoreCase = true)) {
+                                    "Version ${state.release.version} is downloaded. Open the disk image, then move SendChat into Applications to replace the current version."
+                                } else {
+                                    "Version ${state.release.version} is downloaded. Continue in the system installer to finish updating."
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            is UpdateState.Failed -> Text(
+                                text = state.message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+
+                        if (updateState !is UpdateState.PlayStoreManaged) Button(
+                            onClick = {
+                                when (updateState) {
+                                    UpdateState.PlayStoreManaged -> Unit
+                                    is UpdateState.Available -> updateViewModel.downloadUpdate()
+                                    is UpdateState.ReadyToInstall -> updateViewModel.installUpdate()
+                                    UpdateState.Idle, UpdateState.Checking, is UpdateState.UpToDate,
+                                    is UpdateState.Downloading, is UpdateState.Failed -> updateViewModel.checkForUpdates()
+                                }
+                            },
+                            enabled = !isBusy,
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            if (isBusy) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Text(actionLabel)
+                        }
+                    }
+                }
+
                 // App Branding Footer
                 Spacer(modifier = Modifier.height(12.dp))
                 Column(
@@ -301,7 +416,7 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = "Version 1.0.0 • Local Network Sharing",
+                        text = "Version ${AppVersion.current} • Local Network Sharing",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -43,10 +43,16 @@ Pre-built binaries for all desktop platforms are available on the **[Releases Pa
 | Platform | Format | Details | Download |
 | :--- | :--- | :--- | :--- |
 | **Windows** | `.exe` / `.msi` | Windows 10 / 11 (64-bit) | [Download Installer](https://github.com/abzgif/SendChat/releases/latest) |
-| **macOS** | `.dmg` | Apple Silicon & Intel (macOS 11+) | [Download DMG](https://github.com/abzgif/SendChat/releases/latest) |
+| **macOS** | `.pkg` / `.dmg` | Apple Silicon & Intel (macOS 11+) | [Download Installer](https://github.com/abzgif/SendChat/releases/latest) |
 | **Linux (Ubuntu/Debian)** | `.deb` | 64-bit Debian / Ubuntu / Mint | [Download DEB](https://github.com/abzgif/SendChat/releases/latest) |
 | **Linux (Fedora/RHEL)** | `.rpm` | 64-bit Fedora / RHEL / openSUSE | [Download RPM](https://github.com/abzgif/SendChat/releases/latest) |
-| **Android** | `.apk` | Android 7.0+ (API 24+) | Build from source / Studio |
+| **Android** | Google Play | Android 7.0+ (API 24+) | Published through Google Play |
+
+SendChat can check GitHub Releases from **Settings → App Updates** on desktop, download the current platform’s installer, and open it. Android updates are delivered through Google Play.
+
+### Publishing updates
+
+Push a version tag such as `v1.2.3` to build desktop installers and create a GitHub Release. The workflow uses the tag as the desktop app version. Publish Android builds through Play Console; Google Play handles Android update delivery and signing.
 
 ---
 

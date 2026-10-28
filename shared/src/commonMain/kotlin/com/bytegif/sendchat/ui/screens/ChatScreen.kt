@@ -1,6 +1,7 @@
 package com.bytegif.sendchat.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -49,10 +51,12 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -322,7 +326,7 @@ fun ChatScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.background
                     )
                 )
             } else {
@@ -393,7 +397,12 @@ fun ChatScreen(
                     },
                     actions = {
                         Box {
-                            IconButton(onClick = { menuExpanded = true }) {
+                            IconButton(
+                                onClick = { menuExpanded = true },
+                                modifier = Modifier
+                                    .padding(end = 12.dp)
+                                    .size(36.dp)
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.MoreVert,
                                     contentDescription = "Options",
@@ -404,12 +413,34 @@ fun ChatScreen(
                             DropdownMenu(
                                 expanded = menuExpanded,
                                 onDismissRequest = { menuExpanded = false },
-                                modifier = Modifier.width(280.dp)
+                                modifier = Modifier.width(300.dp),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                tonalElevation = 0.dp,
+                                shadowElevation = 4.dp,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                             ) {
+                                Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp)) {
+                                    Text(
+                                        text = "Conversation settings",
+                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = device.name,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1
+                                    )
+                                }
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
                                 DropdownMenuItem(
                                     text = {
                                         Text(
-                                            text = "Mute Notification Sound",
+                                            text = "Notification sound",
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Medium
                                         )
@@ -425,21 +456,27 @@ fun ChatScreen(
                                             checked = device.isMuted,
                                             onCheckedChange = {
                                                 viewModel.toggleDeviceMute(it)
-                                                menuExpanded = false
                                             },
-                                            modifier = Modifier.padding(start = 8.dp)
+                                            modifier = Modifier.padding(start = 8.dp),
+                                            colors = SwitchDefaults.colors(
+                                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                                checkedBorderColor = MaterialTheme.colorScheme.primary,
+                                                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                uncheckedBorderColor = MaterialTheme.colorScheme.outline
+                                            )
                                         )
                                     },
                                     onClick = {
                                         viewModel.toggleDeviceMute(!device.isMuted)
-                                        menuExpanded = false
                                     }
                                 )
 
                                 DropdownMenuItem(
                                     text = {
                                         Text(
-                                            text = "Auto-sync Clipboard",
+                                            text = "Sync clipboard automatically",
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Medium
                                         )
@@ -450,15 +487,26 @@ fun ChatScreen(
                                             checked = device.autoSyncClipboard,
                                             onCheckedChange = {
                                                 viewModel.toggleClipboardAutoSync(it)
-                                                menuExpanded = false
                                             },
-                                            modifier = Modifier.padding(start = 8.dp)
+                                            modifier = Modifier.padding(start = 8.dp),
+                                            colors = SwitchDefaults.colors(
+                                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                                checkedBorderColor = MaterialTheme.colorScheme.primary,
+                                                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                uncheckedBorderColor = MaterialTheme.colorScheme.outline
+                                            )
                                         )
                                     },
                                     onClick = {
                                         viewModel.toggleClipboardAutoSync(!device.autoSyncClipboard)
-                                        menuExpanded = false
                                     }
+                                )
+
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant
                                 )
 
                                 if (messages.isNotEmpty()) {
@@ -504,7 +552,7 @@ fun ChatScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.background
                     )
                 )
             }
@@ -563,6 +611,8 @@ fun ChatScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .widthIn(max = 1040.dp)
+                                .align(Alignment.CenterHorizontally)
                                 .combinedClickable(
                                     onClick = {
                                         if (isSelectionMode) {
