@@ -40,6 +40,7 @@ import io.ktor.server.request.receiveChannel
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondFile
+import io.ktor.server.response.respondOutputStream
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -415,16 +416,27 @@ class TransferServer(
                                 call.respond(HttpStatusCode.NotFound, "File not found")
                                 return@get
                             }
-                            val file = File(shared.filePath)
-                            if (!file.exists()) {
-                                call.respond(HttpStatusCode.NotFound, "File missing on disk")
+                            val stream = FileManager.openInputStream(shared.filePath)
+                            if (stream == null) {
+                                call.respond(HttpStatusCode.NotFound, "File missing or unreadable")
                                 return@get
                             }
+                            val encodedFileName = runCatching {
+                                java.net.URLEncoder.encode(shared.name, "UTF-8").replace("+", "%20")
+                            }.getOrDefault(shared.name)
                             call.response.header(
                                 HttpHeaders.ContentDisposition,
-                                "attachment; filename=\"${file.name}\""
+                                "attachment; filename=\"${shared.name.replace("\"", "\\\"")}\"; filename*=UTF-8''$encodedFileName"
                             )
-                            call.respondFile(file)
+                            if (shared.size > 0) {
+                                call.response.header(HttpHeaders.ContentLength, shared.size.toString())
+                            }
+                            call.respondOutputStream(
+                                contentType = ContentType.Application.OctetStream,
+                                status = HttpStatusCode.OK
+                            ) {
+                                stream.use { input -> input.copyTo(this) }
+                            }
                         }
 
                         post("/api/web/upload") {

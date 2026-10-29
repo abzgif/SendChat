@@ -95,6 +95,22 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            val webSharePickerLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.OpenMultipleDocuments()
+            ) { uris ->
+                if (!uris.isNullOrEmpty()) {
+                    uris.forEach { uri ->
+                        runCatching {
+                            contentResolver.takePersistableUriPermission(
+                                uri,
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            )
+                        }
+                        appContainer.transferManager.webShareManager.addFile(uri.toString())
+                    }
+                }
+            }
+
             App(
                 container = appContainer,
                 onPickFiles = {
@@ -105,6 +121,9 @@ class MainActivity : ComponentActivity() {
                 },
                 onPickDownloadDir = {
                     dirPickerLauncher.launch(null)
+                },
+                onPickWebShareFiles = {
+                    webSharePickerLauncher.launch(arrayOf("*/*"))
                 }
             )
         }

@@ -191,6 +191,18 @@ fun main() {
                         container.settingsViewModel.updateDownloadDirectory(chooser.selectedFile.absolutePath)
                     }
                 }
+            },
+            onPickWebShareFiles = {
+                val dialog = FileDialog(window as Frame, "Select Files to Share to Web", FileDialog.LOAD).apply {
+                    isMultipleMode = true
+                    isVisible = true
+                }
+                val files = dialog.files
+                if (files != null && files.isNotEmpty()) {
+                    files.forEach { file ->
+                        container.transferManager.webShareManager.addFile(file.absolutePath)
+                    }
+                }
             }
         )
     }

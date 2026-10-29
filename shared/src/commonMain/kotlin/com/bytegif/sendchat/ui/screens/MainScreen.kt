@@ -48,6 +48,7 @@ fun MainScreen(
     onPickFiles: () -> Unit,
     onPickImages: () -> Unit,
     onPickDownloadDir: (() -> Unit)? = null,
+    onPickWebShareFiles: (() -> Unit)? = null,
     onCopyText: (String) -> Unit
 ) {
     var mobileScreen by remember { mutableStateOf(MobileCurrentScreen.DEVICE_LIST) }
@@ -131,7 +132,7 @@ fun MainScreen(
         WebShareDialog(
             transferManager = deviceListViewModel.transferManager,
             onDismiss = { showWebShareDialog = false },
-            onPickFilesToShare = onPickFiles,
+            onPickFilesToShare = onPickWebShareFiles,
             onCopyText = onCopyText
         )
     }

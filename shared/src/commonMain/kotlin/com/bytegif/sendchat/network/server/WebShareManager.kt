@@ -28,13 +28,14 @@ class WebShareManager {
     val sharedFiles: StateFlow<List<WebSharedFile>> = _sharedFiles.asStateFlow()
 
     fun addFile(filePath: String): WebSharedFile? {
-        val file = File(filePath)
-        if (!file.exists() || !file.canRead()) return null
+        if (!FileManager.fileExists(filePath)) return null
+        val name = FileManager.getFileName(filePath)
+        val size = FileManager.getFileSize(filePath)
         val item = WebSharedFile(
-            name = file.name,
-            size = file.length(),
-            filePath = file.absolutePath,
-            isImage = isImageFile(file.name)
+            name = name,
+            size = size,
+            filePath = filePath,
+            isImage = isImageFile(name)
         )
         _sharedFiles.value = _sharedFiles.value.filter { it.filePath != filePath } + item
         return item
@@ -570,6 +571,9 @@ class WebShareManager {
             showToast('Network error');
         }
     }
+
+    // Auto-refresh the list of shared files every 3 seconds so new app files appear instantly
+    setInterval(loadSharedFiles, 3000);
 </script>
 
 </body>

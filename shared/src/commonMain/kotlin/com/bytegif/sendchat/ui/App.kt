@@ -73,7 +73,8 @@ fun App(
     container: AppContainer,
     onPickFiles: () -> Unit = {},
     onPickImages: () -> Unit = {},
-    onPickDownloadDir: (() -> Unit)? = null
+    onPickDownloadDir: (() -> Unit)? = null,
+    onPickWebShareFiles: (() -> Unit)? = null
 ) {
     LaunchedEffect(Unit) {
         container.transferManager.initialize()
@@ -91,6 +92,7 @@ fun App(
             onPickFiles = onPickFiles,
             onPickImages = onPickImages,
             onPickDownloadDir = onPickDownloadDir,
+            onPickWebShareFiles = onPickWebShareFiles,
             onCopyText = { container.clipboardManager.setText(it) }
         )
     }

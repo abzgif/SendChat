@@ -138,7 +138,12 @@ actual object FileManager {
 
     actual fun fileExists(filePath: String): Boolean {
         if (filePath.startsWith("content://")) {
-            return getFileSize(filePath) > 0
+            val context = AndroidAppContextHolder.appContext ?: return false
+            val uri = Uri.parse(filePath)
+            return runCatching {
+                context.contentResolver.openFileDescriptor(uri, "r")?.use { true }
+                    ?: (context.contentResolver.openInputStream(uri)?.use { true } == true)
+            }.getOrDefault(false)
         }
         return File(filePath).exists()
     }
