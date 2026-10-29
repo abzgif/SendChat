@@ -65,6 +65,10 @@ compose.desktop {
     application {
         mainClass = "com.bytegif.sendchat.desktop.MainKt"
 
+        buildTypes.release.proguard {
+            configurationFiles.from(project.file("proguard-rules.pro"))
+        }
+
         nativeDistributions {
             targetFormats(
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg,
