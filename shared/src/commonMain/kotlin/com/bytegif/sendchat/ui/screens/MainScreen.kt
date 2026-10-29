@@ -55,6 +55,7 @@ fun MainScreen(
 
     var pairingTargetDevice by remember { mutableStateOf<Device?>(null) }
     var showPairingDialog by remember { mutableStateOf(false) }
+    var showWebShareDialog by remember { mutableStateOf(false) }
 
     var viewingImageFilePath by remember { mutableStateOf<String?>(null) }
 
@@ -82,6 +83,8 @@ fun MainScreen(
             pairingTargetDevice = null
             pairingViewModel.resetState()
         }
+    } else if (showWebShareDialog) {
+        BackHandler { showWebShareDialog = false }
     } else if (showSettings) {
         BackHandler { showSettings = false }
     } else if (mobileScreen != MobileCurrentScreen.DEVICE_LIST) {
@@ -120,6 +123,16 @@ fun MainScreen(
                     mobileScreen = MobileCurrentScreen.CHAT
                 }
             }
+        )
+    }
+
+    // Global Web Share Dialog
+    if (showWebShareDialog) {
+        WebShareDialog(
+            transferManager = deviceListViewModel.transferManager,
+            onDismiss = { showWebShareDialog = false },
+            onPickFilesToShare = onPickFiles,
+            onCopyText = onCopyText
         )
     }
 
@@ -164,6 +177,9 @@ fun MainScreen(
                             },
                             onOpenSettings = {
                                 showSettings = true
+                            },
+                            onOpenWebShare = {
+                                showWebShareDialog = true
                             }
                         )
                     }
@@ -213,6 +229,9 @@ fun MainScreen(
                             },
                             onOpenSettings = {
                                 mobileScreen = MobileCurrentScreen.SETTINGS
+                            },
+                            onOpenWebShare = {
+                                showWebShareDialog = true
                             }
                         )
                     }

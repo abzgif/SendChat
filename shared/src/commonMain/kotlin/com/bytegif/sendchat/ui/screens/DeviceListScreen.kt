@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -60,6 +61,7 @@ fun DeviceListScreen(
     onOpenChat: (Device) -> Unit,
     onOpenPairing: (Device?) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenWebShare: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val devices by viewModel.devices.collectAsState()
@@ -139,6 +141,14 @@ fun DeviceListScreen(
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Direct IP Connect",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    IconButton(onClick = onOpenWebShare) {
+                        Icon(
+                            imageVector = Icons.Default.Language,
+                            contentDescription = "Web Share",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }

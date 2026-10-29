@@ -40,6 +40,7 @@ class TransferManager(
     val transferClient: TransferClient
 ) {
     private val scope = CoroutineScope(Dispatchers.Default)
+    val webShareManager get() = transferServer.webShareManager
     val incomingPairRequests: SharedFlow<IncomingPairPrompt> = transferServer.incomingPairRequests
     private val activeOutgoingJobs = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.Job>()
 

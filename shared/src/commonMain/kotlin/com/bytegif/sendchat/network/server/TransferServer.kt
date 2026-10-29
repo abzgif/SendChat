@@ -1,6 +1,8 @@
 package com.bytegif.sendchat.network.server
 
 import com.bytegif.sendchat.data.file.FileManager
+import com.bytegif.sendchat.data.file.isImageFile
+import com.bytegif.sendchat.data.file.getMimeType
 import com.bytegif.sendchat.domain.model.AppSettings
 import com.bytegif.sendchat.domain.model.DevicePlatform
 import com.bytegif.sendchat.domain.model.Direction
@@ -21,6 +23,8 @@ import com.bytegif.sendchat.platform.ClipboardManager
 import com.bytegif.sendchat.platform.Notifier
 import com.bytegif.sendchat.platform.PlatformInfo
 import com.bytegif.sendchat.security.CryptoEngine
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -30,11 +34,17 @@ import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
+import io.ktor.server.request.header
 import io.ktor.server.request.receive
+import io.ktor.server.request.receiveChannel
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondFile
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
+import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +56,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Base64
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 data class IncomingPairPrompt(
@@ -59,6 +70,7 @@ class TransferServer(
     private val settingsRepository: SettingsRepository,
     private val clipboardManager: ClipboardManager
 ) {
+    val webShareManager = WebShareManager()
     private val scope = CoroutineScope(Dispatchers.IO)
     private var server: io.ktor.server.engine.EmbeddedServer<*, *>? = null
     private var isRunning: Boolean = false
@@ -378,6 +390,142 @@ class TransferServer(
                                 }
                             } catch (e: Throwable) {
                                 call.respond(HttpStatusCode.InternalServerError, ApiResponse(success = false, message = e.message ?: "Chunk error"))
+                            }
+                        }
+
+                        // Local Web Share endpoints
+                        get("/") {
+                            val settings = settingsRepository.getCurrentSettings()
+                            call.respondText(webShareManager.getHtml(settings.deviceName), ContentType.Text.Html)
+                        }
+
+                        get("/web") {
+                            val settings = settingsRepository.getCurrentSettings()
+                            call.respondText(webShareManager.getHtml(settings.deviceName), ContentType.Text.Html)
+                        }
+
+                        get("/api/web/files") {
+                            call.respond(webShareManager.sharedFiles.value)
+                        }
+
+                        get("/api/web/download/{id}") {
+                            val id = call.parameters["id"] ?: ""
+                            val shared = webShareManager.getFile(id)
+                            if (shared == null) {
+                                call.respond(HttpStatusCode.NotFound, "File not found")
+                                return@get
+                            }
+                            val file = File(shared.filePath)
+                            if (!file.exists()) {
+                                call.respond(HttpStatusCode.NotFound, "File missing on disk")
+                                return@get
+                            }
+                            call.response.header(
+                                HttpHeaders.ContentDisposition,
+                                "attachment; filename=\"${file.name}\""
+                            )
+                            call.respondFile(file)
+                        }
+
+                        post("/api/web/upload") {
+                            try {
+                                val encodedName = call.request.header("X-Filename") ?: "shared_file"
+                                val fileName = runCatching { java.net.URLDecoder.decode(encodedName, "UTF-8") }.getOrDefault(encodedName)
+                                val settings = settingsRepository.getCurrentSettings()
+                                val configuredDir = settings.downloadDirectory.ifBlank {
+                                    PlatformInfo.getDefaultDownloadDirectory()
+                                }
+                                val finalFilePath = FileManager.getUniqueFilePath(configuredDir, fileName)
+                                val finalFile = File(finalFilePath)
+                                finalFile.parentFile?.mkdirs()
+
+                                val channel = call.receiveChannel()
+                                val fos = FileOutputStream(finalFile)
+                                channel.copyTo(fos)
+                                fos.close()
+
+                                val isImage = isImageFile(fileName)
+                                val actualSize = finalFile.length()
+                                val transferId = UUID.randomUUID().toString()
+
+                                val webDevice = PairedDevice(
+                                    id = "web_browser",
+                                    name = "Web Browser",
+                                    platform = DevicePlatform.UNKNOWN,
+                                    publicKeyFingerprint = "",
+                                    lastKnownIp = call.request.local.remoteAddress,
+                                    lastKnownPort = 0,
+                                    pairedAt = System.currentTimeMillis(),
+                                    autoSyncClipboard = false,
+                                    isMuted = false
+                                )
+                                deviceRepository.savePairedDevice(webDevice)
+
+                                val content = if (isImage) {
+                                    MessageContent.ImageAttachment(
+                                        fileName = fileName,
+                                        fileSize = actualSize,
+                                        filePath = finalFilePath,
+                                        thumbnailBase64 = FileManager.generateImageThumbnailBase64(finalFilePath, 512)
+                                    )
+                                } else {
+                                    MessageContent.FileAttachment(
+                                        fileName = fileName,
+                                        fileSize = actualSize,
+                                        filePath = finalFilePath,
+                                        mimeType = getMimeType(fileName),
+                                        fileHash = ""
+                                    )
+                                }
+
+                                val message = Message(
+                                    id = transferId,
+                                    deviceId = "web_browser",
+                                    content = content,
+                                    direction = Direction.RECEIVED,
+                                    status = TransferStatus.Completed,
+                                    timestamp = System.currentTimeMillis()
+                                )
+                                messageRepository.insertMessage(message)
+                                PlatformInfo.scanMediaFile(finalFilePath)
+                                Notifier.showNotification("Web Browser", "Received $fileName", "web_browser", isMuted = false)
+                                call.respond(ApiResponse(success = true, message = finalFilePath))
+                            } catch (e: Throwable) {
+                                call.respond(HttpStatusCode.InternalServerError, ApiResponse(success = false, message = e.message ?: "Upload failed"))
+                            }
+                        }
+
+                        post("/api/web/message") {
+                            try {
+                                val req = call.receive<WebMessageRequest>()
+                                val transferId = UUID.randomUUID().toString()
+
+                                val webDevice = PairedDevice(
+                                    id = "web_browser",
+                                    name = "Web Browser",
+                                    platform = DevicePlatform.UNKNOWN,
+                                    publicKeyFingerprint = "",
+                                    lastKnownIp = call.request.local.remoteAddress,
+                                    lastKnownPort = 0,
+                                    pairedAt = System.currentTimeMillis(),
+                                    autoSyncClipboard = false,
+                                    isMuted = false
+                                )
+                                deviceRepository.savePairedDevice(webDevice)
+
+                                val message = Message(
+                                    id = transferId,
+                                    deviceId = "web_browser",
+                                    content = MessageContent.Text(req.text),
+                                    direction = Direction.RECEIVED,
+                                    status = TransferStatus.Completed,
+                                    timestamp = System.currentTimeMillis()
+                                )
+                                messageRepository.insertMessage(message)
+                                Notifier.showNotification("Web Browser", req.text, "web_browser", isMuted = false)
+                                call.respond(ApiResponse(success = true))
+                            } catch (e: Throwable) {
+                                call.respond(HttpStatusCode.InternalServerError, ApiResponse(success = false, message = e.message ?: "Message failed"))
                             }
                         }
                     }

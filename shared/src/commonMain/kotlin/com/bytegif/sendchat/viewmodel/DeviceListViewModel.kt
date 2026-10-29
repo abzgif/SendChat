@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 class DeviceListViewModel(
     private val deviceRepository: DeviceRepository,
-    private val transferManager: TransferManager,
+    val transferManager: TransferManager,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 ) {
     val searchQuery = MutableStateFlow("")
