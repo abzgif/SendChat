@@ -5,33 +5,52 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
-val appVersion = providers.gradleProperty("appVersion").orElse("1.1.0").get()
-val appVersionParts = appVersion.removePrefix("v").substringBefore('-').split('.')
-    .map { it.toIntOrNull() ?: 0 }
-val appVersionCode = appVersionParts.getOrElse(0) { 0 } * 1_000_000 +
-    appVersionParts.getOrElse(1) { 0 } * 1_000 +
-    appVersionParts.getOrElse(2) { 0 }
+val appVersion = providers.gradleProperty("appVersion").orElse("1.1.6").get()
+val appVersionCode = providers.gradleProperty("appVersionCode")
+    .map { it.toIntOrNull() ?: 7 }
+    .orElse(7)
+    .get()
 
 android {
     namespace = "com.bytegif.sendchat.android"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.bytegif.sendchat"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersion.removePrefix("v")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            debugSymbolLevel = "SYMBOL_TABLE"
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
+            )
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += listOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "/META-INF/INDEX.LIST",
+                "META-INF/*.kotlin_module",
+                "**/*.dll",
+                "**/*.jnilib"
             )
         }
     }

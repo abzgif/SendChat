@@ -162,7 +162,7 @@ fun DeviceCard(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "${device.platform.name.lowercase().replaceFirstChar { it.uppercase() }} • ${device.ip}",
+                        text = "${device.platform.displayName} • ${device.ip}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1

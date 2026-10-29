@@ -91,6 +91,29 @@ actual object PlatformInfo {
 
     actual fun openFileInDefaultApp(filePath: String) {
         val context = AndroidAppContextHolder.appContext ?: return
+
+        if (filePath.startsWith("content://")) {
+            runCatching {
+                val uri = Uri.parse(filePath)
+                val mimeType = context.contentResolver.getType(uri) ?: "*/*"
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, mimeType)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                val chooser = Intent.createChooser(intent, "Open with...").apply {
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(chooser)
+            }.onFailure {
+                runCatching {
+                    android.widget.Toast.makeText(context, "No application found to open this file", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+            return
+        }
+
         val file = File(filePath)
         if (!file.exists()) {
             runCatching {

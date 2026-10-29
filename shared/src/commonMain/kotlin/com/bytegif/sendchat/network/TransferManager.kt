@@ -252,7 +252,7 @@ class TransferManager(
         val transferId = UUID.randomUUID().toString()
         val timestamp = System.currentTimeMillis()
         val isImage = isImageFile(fileName)
-        val thumbBase64 = if (isImage) FileManager.generateImageThumbnailBase64(filePath, 256) else null
+        val thumbBase64 = if (isImage) FileManager.generateImageThumbnailBase64(filePath, 512) else null
 
         val fileHash = if (fileSize in 1..(10 * 1024 * 1024)) {
             FileManager.calculateFileSha256(filePath)

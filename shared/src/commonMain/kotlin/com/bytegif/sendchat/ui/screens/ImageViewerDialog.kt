@@ -31,16 +31,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.bytegif.sendchat.data.file.FileManager
 import com.bytegif.sendchat.platform.PlatformInfo
 import com.bytegif.sendchat.ui.util.ImageBitmapLoader
-import java.io.File
 
 @Composable
 fun ImageViewerDialog(
     filePath: String,
     onDismiss: () -> Unit
 ) {
-    val file = File(filePath)
+    val displayName = remember(filePath) { FileManager.getFileName(filePath) }
     val imageBitmap = remember(filePath) {
         ImageBitmapLoader.loadFromPath(filePath, maxDimension = 1920)
     }
@@ -64,7 +64,7 @@ fun ImageViewerDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = file.name,
+                        text = displayName,
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         modifier = Modifier.weight(1f)
@@ -87,7 +87,7 @@ fun ImageViewerDialog(
                     if (imageBitmap != null) {
                         Image(
                             bitmap = imageBitmap,
-                            contentDescription = file.name,
+                            contentDescription = displayName,
                             contentScale = ContentScale.Fit,
                             modifier = Modifier.fillMaxSize()
                         )

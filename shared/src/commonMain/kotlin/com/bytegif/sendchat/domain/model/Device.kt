@@ -10,6 +10,15 @@ enum class DevicePlatform {
     LINUX,
     UNKNOWN;
 
+    val displayName: String
+        get() = when (this) {
+            ANDROID -> "Android"
+            WINDOWS -> "Windows"
+            MACOS -> "macOS"
+            LINUX -> "Linux"
+            UNKNOWN -> "Unknown"
+        }
+
     companion object {
         fun fromString(value: String): DevicePlatform {
             return entries.firstOrNull { it.name.equals(value, ignoreCase = true) } ?: UNKNOWN

@@ -6,20 +6,12 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import com.bytegif.sendchat.data.db.AndroidAppContextHolder
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
 actual class ClipboardManager actual constructor() {
 
     private var clipListener: AndroidClipboard.OnPrimaryClipChangedListener? = null
     private var lastObservedText: String? = null
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val scope = CoroutineScope(Dispatchers.Main)
-    private var pollingJob: Job? = null
 
     private fun getSystemService(): AndroidClipboard? {
         val ctx = AndroidAppContextHolder.appContext ?: return null
@@ -64,24 +56,10 @@ actual class ClipboardManager actual constructor() {
             runCatching {
                 manager.addPrimaryClipChangedListener(listener)
             }
-
-            // Polling backup ticker for Android 10+ background restriction
-            pollingJob = scope.launch {
-                while (isActive) {
-                    delay(1500)
-                    val current = getText()
-                    if (!current.isNullOrBlank() && current != lastObservedText) {
-                        lastObservedText = current
-                        onClipboardChanged(current)
-                    }
-                }
-            }
         }
     }
 
     actual fun stopObserving() {
-        pollingJob?.cancel()
-        pollingJob = null
         mainHandler.post {
             val manager = getSystemService() ?: return@post
             clipListener?.let {

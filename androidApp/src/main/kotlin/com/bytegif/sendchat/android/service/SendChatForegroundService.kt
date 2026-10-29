@@ -55,8 +55,8 @@ class SendChatForegroundService : Service {
             .takeIf { it != 0 } ?: applicationInfo.icon
 
         val builder = NotificationCompat.Builder(this, SendChatApplication.CHANNEL_ID)
-            .setContentTitle("SendChat is active")
-            .setContentText("Ready to share files and text on local network")
+            .setContentTitle("SendChat File Transfer & Sync")
+            .setContentText("Active transfer session on local network")
             .setSmallIcon(smallIconRes)
             .setColor(0xFFFF5365.toInt())
             .setContentIntent(pendingIntent)

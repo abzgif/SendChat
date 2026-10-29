@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.sqldelight)
 }
 
-val appVersion = providers.gradleProperty("appVersion").orElse("1.1.0").get()
+val appVersion = providers.gradleProperty("appVersion").orElse("1.1.6").get()
 tasks.withType<Jar>().configureEach {
     manifest.attributes["Implementation-Version"] = appVersion
 }
@@ -83,7 +83,7 @@ kotlin {
 
 android {
     namespace = "com.bytegif.sendchat.shared"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24

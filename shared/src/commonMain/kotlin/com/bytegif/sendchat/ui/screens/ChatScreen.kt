@@ -65,6 +65,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -125,9 +126,9 @@ fun ChatScreen(
 
     val messages by viewModel.messages.collectAsState()
     val inputText by viewModel.inputText.collectAsState()
-    val listState = rememberLazyListState(
-        initialFirstVisibleItemIndex = (messages.size - 1).coerceAtLeast(0)
-    )
+    val listState = androidx.compose.runtime.key(device.id) {
+        rememberLazyListState()
+    }
     var menuExpanded by remember { mutableStateOf(false) }
     var showClearHistoryDialog by remember { mutableStateOf(false) }
     var showClearWithFilesDialog by remember { mutableStateOf(false) }
@@ -251,20 +252,17 @@ fun ChatScreen(
         )
     }
 
-    var hasScrolledToBottomInitially by remember(device.id) { mutableStateOf(false) }
+    var previousMessageCount by remember(device.id) { mutableIntStateOf(0) }
 
-    LaunchedEffect(device.id) {
-        hasScrolledToBottomInitially = false
-    }
-
-    LaunchedEffect(messages.size, hasScrolledToBottomInitially) {
+    LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
-            if (!hasScrolledToBottomInitially) {
-                listState.scrollToItem(messages.size - 1)
-                hasScrolledToBottomInitially = true
-            } else {
-                listState.animateScrollToItem(messages.size - 1)
+            if (previousMessageCount > 0 && messages.size > previousMessageCount) {
+                // If user is at or near the bottom (item 0 in reversed list), smoothly scroll to the new message
+                if (listState.firstVisibleItemIndex <= 1) {
+                    listState.animateScrollToItem(0)
+                }
             }
+            previousMessageCount = messages.size
         }
     }
 
@@ -601,12 +599,13 @@ fun ChatScreen(
             } else {
                 LazyColumn(
                     state = listState,
+                    reverseLayout = true,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
                     contentPadding = PaddingValues(vertical = 8.dp)
                 ) {
-                    items(messages, key = { it.id }) { msg ->
+                    items(messages.asReversed(), key = { it.id }) { msg ->
                         val isSelected = selectedMessageIds.contains(msg.id)
                         Row(
                             modifier = Modifier

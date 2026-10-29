@@ -20,7 +20,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
-const val DEFAULT_APP_VERSION = "1.1.0"
+const val DEFAULT_APP_VERSION = "1.1.6"
 
 expect object AppVersion {
     val current: String
