@@ -66,7 +66,7 @@ compose.desktop {
         mainClass = "com.bytegif.sendchat.desktop.MainKt"
 
         buildTypes.release.proguard {
-            configurationFiles.from(project.file("proguard-rules.pro"))
+            isEnabled.set(false)
         }
 
         nativeDistributions {
