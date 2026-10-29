@@ -48,6 +48,8 @@ jobs:
           path: |
             desktopApp/build/compose/binaries/main/exe/*
             desktopApp/build/compose/binaries/main/msi/*
+            desktopApp/build/compose/binaries/main-release/exe/*
+            desktopApp/build/compose/binaries/main-release/msi/*
 
   build-macos:
     name: Build macOS installers
@@ -84,6 +86,8 @@ jobs:
           path: |
             desktopApp/build/compose/binaries/main/dmg/*
             desktopApp/build/compose/binaries/main/pkg/*
+            desktopApp/build/compose/binaries/main-release/dmg/*
+            desktopApp/build/compose/binaries/main-release/pkg/*
 
   build-linux:
     name: Build Linux DEB / RPM
@@ -125,6 +129,8 @@ jobs:
           path: |
             desktopApp/build/compose/binaries/main/deb/*
             desktopApp/build/compose/binaries/main/rpm/*
+            desktopApp/build/compose/binaries/main-release/deb/*
+            desktopApp/build/compose/binaries/main-release/rpm/*
 
   create-release:
     name: Create GitHub Release
