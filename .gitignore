@@ -38,6 +38,7 @@ captures/
 *.rpm
 *.tar.gz
 desktopApp/build/compose/
+release_builds/
 
 # Keep project resource zips
 !shared/src/jvmMain/resources/**/*.zip
