@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.sqldelight)
 }
 
-val appVersion = providers.gradleProperty("appVersion").orElse("1.1.6").get()
+val appVersion = providers.gradleProperty("appVersion").orElse("1.1.7").get()
 tasks.withType<Jar>().configureEach {
     manifest.attributes["Implementation-Version"] = appVersion
 }

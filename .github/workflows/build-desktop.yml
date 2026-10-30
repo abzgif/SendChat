@@ -159,6 +159,14 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          name: "SendChat ${{ github.ref_name }}"
+          body: |
+            ### SendChat ${{ github.ref_name }} Release Notes
+
+            - **🌐 Local Web Share**: Zero-install browser sharing via QR code and local web portal (`http://<ip>:42831`). Connect from iPhones, iPads, Android devices, or PCs without installing SendChat.
+            - **⚡ App-to-Web File Sharing & Streaming**: Fast, direct local file streaming and instant downloads in any web browser.
+            - **🎨 UI Polish & Layout Enhancements**: Balanced top app bar sizing, live online status indicators, and responsive desktop two-pane layout.
+            - **🛠️ Stability & Performance**: Enhanced peer discovery, Android 14+ permission handling, and optimized native desktop builds across macOS, Windows, and Linux.
           files: |
             artifacts/**/*.exe
             artifacts/**/*.msi
@@ -168,3 +176,4 @@ jobs:
             artifacts/**/*.rpm
           draft: false
           prerelease: false
+          generate_release_notes: true

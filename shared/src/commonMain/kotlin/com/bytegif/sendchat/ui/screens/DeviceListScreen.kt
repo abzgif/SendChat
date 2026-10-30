@@ -85,62 +85,71 @@ fun DeviceListScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(end = 4.dp)
                     ) {
-                        AppLogo(size = 32.dp)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        AppLogo(size = 36.dp)
+                        Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
                                     text = "SendChat",
-                                    style = MaterialTheme.typography.titleMedium.copy(
+                                    style = MaterialTheme.typography.titleLarge.copy(
                                         fontWeight = FontWeight.Bold,
-                                        letterSpacing = (-0.3).sp
+                                        letterSpacing = (-0.5).sp
                                     ),
                                     maxLines = 1
                                 )
                                 val onlineCount = devices.count { it.isOnline }
                                 if (onlineCount > 0) {
-                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Surface(
-                                        shape = CircleShape,
-                                        color = MaterialTheme.colorScheme.primaryContainer,
-                                        modifier = Modifier.size(18.dp)
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = MaterialTheme.colorScheme.primaryContainer
                                     ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Text(
-                                                text = "$onlineCount",
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 11.sp,
-                                                    lineHeight = 11.sp
-                                                ),
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                        }
+                                        Text(
+                                            text = "$onlineCount",
+                                            style = MaterialTheme.typography.labelMedium.copy(
+                                                fontWeight = FontWeight.Bold
+                                            ),
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                                        )
                                     }
                                 }
                             }
-                            Text(
-                                text = if (devices.any { it.isOnline }) "${devices.count { it.isOnline }} online nearby" else "No devices nearby",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                val onlineCount = devices.count { it.isOnline }
+                                if (onlineCount > 0) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .background(Color(0xFF10B981), CircleShape)
+                                    )
+                                }
+                                Text(
+                                    text = if (devices.any { it.isOnline }) "${devices.count { it.isOnline }} online nearby" else "No devices nearby",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1
+                                )
+                            }
                         }
                     }
                 },
                 actions = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier.padding(end = 4.dp)
                     ) {
                         IconButton(
                             onClick = { viewModel.refreshDiscovery() },
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(40.dp)
                         ) {
                             if (isRefreshing) {
                                 CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
+                                    modifier = Modifier.size(20.dp),
                                     strokeWidth = 2.dp,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -149,44 +158,44 @@ fun DeviceListScreen(
                                     imageVector = Icons.Default.Refresh,
                                     contentDescription = "Refresh Discovery",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
                         }
 
                         IconButton(
                             onClick = { onOpenPairing(null) },
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = "Direct IP Connect",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
 
                         IconButton(
                             onClick = onOpenWebShare,
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Language,
                                 contentDescription = "Web Share",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
 
                         IconButton(
                             onClick = onOpenSettings,
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Settings,
                                 contentDescription = "Settings",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }

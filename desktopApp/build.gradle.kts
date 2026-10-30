@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
-val appVersion = providers.gradleProperty("appVersion").orElse("1.1.6").get()
+val appVersion = providers.gradleProperty("appVersion").orElse("1.1.7").get()
 
 val extendedIconsRuntime = configurations.create("extendedIconsRuntime") {
     isCanBeConsumed = false

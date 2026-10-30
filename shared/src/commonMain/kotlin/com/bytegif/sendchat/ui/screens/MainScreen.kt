@@ -163,7 +163,7 @@ fun MainScreen(
                 Row(modifier = Modifier.fillMaxSize()) {
                     Box(
                         modifier = Modifier
-                            .width(380.dp)
+                            .width(400.dp)
                             .fillMaxHeight()
                     ) {
                         DeviceListScreen(
