@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DesktopMac
 import androidx.compose.material.icons.filled.DesktopWindows
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -287,6 +288,7 @@ private fun getPlatformIcon(platform: DevicePlatform): ImageVector {
         DevicePlatform.WINDOWS -> Icons.Default.DesktopWindows
         DevicePlatform.MACOS -> Icons.Default.DesktopMac
         DevicePlatform.LINUX -> Icons.Default.Computer
+        DevicePlatform.WEBPAGE -> Icons.Default.Language
         DevicePlatform.UNKNOWN -> Icons.Default.Computer
     }
 }

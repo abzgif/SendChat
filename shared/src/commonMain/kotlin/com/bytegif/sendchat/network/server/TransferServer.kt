@@ -52,6 +52,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -396,17 +397,92 @@ class TransferServer(
 
                         // Local Web Share endpoints
                         get("/") {
+                            val remoteIp = call.request.local.remoteAddress
+                            val webDevice = PairedDevice(
+                                id = "web_browser",
+                                name = "Web Browser",
+                                platform = DevicePlatform.WEBPAGE,
+                                publicKeyFingerprint = "",
+                                lastKnownIp = remoteIp,
+                                lastKnownPort = 0,
+                                pairedAt = System.currentTimeMillis(),
+                                autoSyncClipboard = false,
+                                isMuted = false
+                            )
+                            deviceRepository.savePairedDevice(webDevice)
                             val settings = settingsRepository.getCurrentSettings()
                             call.respondText(webShareManager.getHtml(settings.deviceName), ContentType.Text.Html)
                         }
 
                         get("/web") {
+                            val remoteIp = call.request.local.remoteAddress
+                            val webDevice = PairedDevice(
+                                id = "web_browser",
+                                name = "Web Browser",
+                                platform = DevicePlatform.WEBPAGE,
+                                publicKeyFingerprint = "",
+                                lastKnownIp = remoteIp,
+                                lastKnownPort = 0,
+                                pairedAt = System.currentTimeMillis(),
+                                autoSyncClipboard = false,
+                                isMuted = false
+                            )
+                            deviceRepository.savePairedDevice(webDevice)
                             val settings = settingsRepository.getCurrentSettings()
                             call.respondText(webShareManager.getHtml(settings.deviceName), ContentType.Text.Html)
                         }
 
                         get("/api/web/files") {
                             call.respond(webShareManager.sharedFiles.value)
+                        }
+
+                        get("/api/web/messages") {
+                            try {
+                                val messages = messageRepository.getMessagesForDevice("web_browser").first()
+                                val dtos = messages.map { msg ->
+                                    val fromApp = msg.direction == Direction.SENT
+                                    val isFile = msg.content is MessageContent.FileAttachment || msg.content is MessageContent.ImageAttachment
+                                    val fileName = when (val c = msg.content) {
+                                        is MessageContent.FileAttachment -> c.fileName
+                                        is MessageContent.ImageAttachment -> c.fileName
+                                        else -> null
+                                    }
+                                    val fileSize = when (val c = msg.content) {
+                                        is MessageContent.FileAttachment -> c.fileSize
+                                        is MessageContent.ImageAttachment -> c.fileSize
+                                        else -> null
+                                    }
+                                    val text = when (val c = msg.content) {
+                                        is MessageContent.Text -> c.text
+                                        is MessageContent.Clipboard -> c.text
+                                        is MessageContent.FileAttachment -> c.fileName
+                                        is MessageContent.ImageAttachment -> c.fileName
+                                    }
+                                    val sharedFile = if (isFile) {
+                                        val filePath = when (val c = msg.content) {
+                                            is MessageContent.FileAttachment -> c.filePath
+                                            is MessageContent.ImageAttachment -> c.filePath
+                                            else -> ""
+                                        }
+                                        webShareManager.sharedFiles.value.firstOrNull { it.filePath == filePath }
+                                            ?: if (filePath.isNotBlank()) webShareManager.addFile(filePath) else null
+                                    } else null
+
+                                    WebChatMessage(
+                                        id = msg.id,
+                                        text = text,
+                                        fromApp = fromApp,
+                                        timestamp = msg.timestamp,
+                                        isFile = isFile,
+                                        fileName = fileName,
+                                        fileSize = fileSize,
+                                        fileDownloadId = sharedFile?.id
+                                    )
+                                }
+                                call.respond(dtos)
+                            } catch (e: Throwable) {
+                                call.respond(emptyList<WebChatMessage>())
+                            }
                         }
 
                         get("/api/web/download/{id}") {
@@ -463,7 +539,7 @@ class TransferServer(
                                 val webDevice = PairedDevice(
                                     id = "web_browser",
                                     name = "Web Browser",
-                                    platform = DevicePlatform.UNKNOWN,
+                                    platform = DevicePlatform.WEBPAGE,
                                     publicKeyFingerprint = "",
                                     lastKnownIp = call.request.local.remoteAddress,
                                     lastKnownPort = 0,
@@ -515,7 +591,7 @@ class TransferServer(
                                 val webDevice = PairedDevice(
                                     id = "web_browser",
                                     name = "Web Browser",
-                                    platform = DevicePlatform.UNKNOWN,
+                                    platform = DevicePlatform.WEBPAGE,
                                     publicKeyFingerprint = "",
                                     lastKnownIp = call.request.local.remoteAddress,
                                     lastKnownPort = 0,

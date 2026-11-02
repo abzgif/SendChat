@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
-val appVersion = providers.gradleProperty("appVersion").orElse("1.1.7").get()
+val appVersion = providers.gradleProperty("appVersion").orElse("1.1.8").get()
 
 val extendedIconsRuntime = configurations.create("extendedIconsRuntime") {
     isCanBeConsumed = false
@@ -106,6 +106,22 @@ compose.desktop {
                 packageVersion = appVersion
                 appCategory = "Network"
                 menuGroup = "Network"
+            }
+        }
+    }
+}
+
+tasks.withType<org.jetbrains.compose.desktop.application.tasks.AbstractJLinkTask>().configureEach {
+    runCatching {
+        val enumClass = Class.forName("org.jetbrains.compose.desktop.application.internal.RuntimeCompressionLevel")
+        val zipLevel = enumClass.enumConstants.firstOrNull { it.toString() == "ZIP" }
+        if (zipLevel != null) {
+            val method = this.javaClass.methods.firstOrNull { it.name.startsWith("getCompressionLevel") }
+            if (method != null) {
+                method.isAccessible = true
+                @Suppress("UNCHECKED_CAST")
+                val prop = method.invoke(this) as org.gradle.api.provider.Property<Any>
+                prop.set(zipLevel)
             }
         }
     }

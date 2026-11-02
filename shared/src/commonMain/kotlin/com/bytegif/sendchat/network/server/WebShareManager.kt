@@ -23,6 +23,18 @@ data class WebMessageRequest(
     val text: String
 )
 
+@Serializable
+data class WebChatMessage(
+    val id: String,
+    val text: String,
+    val fromApp: Boolean,
+    val timestamp: Long,
+    val isFile: Boolean = false,
+    val fileName: String? = null,
+    val fileSize: Long? = null,
+    val fileDownloadId: String? = null
+)
+
 class WebShareManager {
     private val _sharedFiles = MutableStateFlow<List<WebSharedFile>>(emptyList())
     val sharedFiles: StateFlow<List<WebSharedFile>> = _sharedFiles.asStateFlow()
@@ -295,11 +307,127 @@ class WebShareManager {
             color: var(--text-primary);
             font-size: 14px;
             resize: vertical;
-            min-height: 90px;
+            min-height: 70px;
             outline: none;
+            box-sizing: border-box;
+            font-family: inherit;
         }
         textarea:focus {
             border-color: var(--accent);
+        }
+        .chat-container {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+            max-height: 400px;
+            min-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-sizing: border-box;
+        }
+        .chat-history {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+        .chat-msg {
+            display: flex;
+            flex-direction: column;
+            max-width: 86%;
+            word-break: break-word;
+        }
+        .chat-msg.incoming {
+            align-self: flex-start;
+        }
+        .chat-msg.outgoing {
+            align-self: flex-end;
+        }
+        .chat-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            padding: 0 4px;
+        }
+        .chat-msg.outgoing .chat-meta {
+            justify-content: flex-end;
+        }
+        .chat-bubble {
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            line-height: 1.45;
+            position: relative;
+        }
+        .chat-msg.incoming .chat-bubble {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-top-left-radius: 4px;
+        }
+        .chat-msg.outgoing .chat-bubble {
+            background: #2a3854;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-top-right-radius: 4px;
+        }
+        .chat-bubble-text {
+            white-space: pre-wrap;
+            user-select: text;
+        }
+        .chat-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 6px;
+            font-size: 11px;
+            opacity: 0.9;
+        }
+        .chat-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .chat-actions {
+            display: inline-flex;
+            gap: 6px;
+        }
+        .copy-pill {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: var(--text-primary);
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .copy-pill:hover {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: var(--accent);
+        }
+        .copy-pill.copied {
+            background: rgba(16, 185, 129, 0.25);
+            border-color: var(--success);
+            color: var(--success);
+        }
+        .chat-file-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-top: 4px;
         }
         .empty-state {
             text-align: center;
@@ -391,11 +519,23 @@ class WebShareManager {
         </div>
     </div>
 
-    <!-- TAB 3: SEND TEXT / LINK -->
+    <!-- TAB 3: SEND TEXT & CHAT HISTORY -->
     <div id="tab-message" class="tab-content">
-        <div style="font-size: 14px; font-weight: 600; color: var(--text-secondary);">Send Text or Link to $deviceName</div>
-        <textarea id="messageText" placeholder="Paste a link or type a message..."></textarea>
-        <button class="btn" onclick="sendMessage()">Send Message</button>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 14px; font-weight: 600; color: var(--text-secondary);">Chat with $deviceName</span>
+            <button class="btn btn-secondary" onclick="loadMessages()" style="padding: 6px 12px; font-size: 12px;">Refresh</button>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-history" id="chatHistory">
+                <div class="empty-state">Loading chat history...</div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+            <textarea id="messageText" placeholder="Type a message or paste a link... (Press Enter to send)" rows="2"></textarea>
+            <button class="btn" id="sendBtn" onclick="sendMessage()">Send Message</button>
+        </div>
     </div>
 </div>
 
@@ -418,6 +558,7 @@ class WebShareManager {
         } else if (tab === 'message') {
             document.querySelectorAll('.tab-btn')[2].classList.add('active');
             document.getElementById('tab-message').classList.add('active');
+            loadMessages();
         }
     }
 
@@ -434,6 +575,62 @@ class WebShareManager {
         const sizes = ['B', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function formatTime(timestamp) {
+        if (!timestamp) return '';
+        const d = new Date(timestamp);
+        const now = new Date();
+        const isToday = d.toDateString() === now.toDateString();
+        const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+        if (isToday) return timeStr;
+        const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        return `${'$'}{dateStr}, ${'$'}{timeStr}`;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function copyText(text, btn) {
+        if (!text) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                onCopied(btn);
+            }).catch(() => fallbackCopy(text, btn));
+        } else {
+            fallbackCopy(text, btn);
+        }
+    }
+
+    function fallbackCopy(text, btn) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+            document.execCommand('copy');
+            onCopied(btn);
+        } catch (e) {
+            showToast('Failed to copy text');
+        }
+        document.body.removeChild(ta);
+    }
+
+    function onCopied(btn) {
+        if (btn) {
+            btn.classList.add('copied');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span>✓ Copied</span>';
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = originalHtml;
+            }, 2000);
+        }
+        showToast('Text copied to clipboard!');
     }
 
     // Drag and drop setup
@@ -551,10 +748,86 @@ class WebShareManager {
         }
     }
 
+    async function loadMessages() {
+        const history = document.getElementById('chatHistory');
+        try {
+            const res = await fetch('/api/web/messages');
+            if (!res.ok) return;
+            const messages = await res.json();
+            if (!messages || messages.length === 0) {
+                history.innerHTML = '<div class="empty-state">No messages yet.<br>Send a message below or from $deviceName to chat.</div>';
+                return;
+            }
+
+            const signature = messages.length + '_' + (messages[messages.length - 1].id || '');
+            if (history.dataset.sig === signature) return;
+            history.dataset.sig = signature;
+
+            history.innerHTML = '';
+            messages.forEach((msg, idx) => {
+                const isIncoming = msg.fromApp;
+                const senderName = isIncoming ? '$deviceName' : 'You';
+                const timeText = formatTime(msg.timestamp);
+
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'chat-msg ' + (isIncoming ? 'incoming' : 'outgoing');
+
+                let contentHtml = '';
+                if (msg.isFile) {
+                    const downloadUrl = msg.fileDownloadId ? ('/api/web/download/' + msg.fileDownloadId) : '#';
+                    contentHtml = `
+                        <div class="chat-file-box">
+                            <span style="font-size: 22px;">📁</span>
+                            <div style="flex: 1; overflow: hidden; padding-right: 8px;">
+                                <div style="font-weight: 600; font-size: 13px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${'$'}{escapeHtml(msg.fileName || 'Shared File')}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">${'$'}{formatBytes(msg.fileSize || 0)}</div>
+                            </div>
+                            <a href="${'$'}{downloadUrl}" download="${'$'}{escapeHtml(msg.fileName || 'download')}" class="btn" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">Download</a>
+                        </div>
+                    `;
+                } else {
+                    contentHtml = `<div class="chat-bubble-text">${'$'}{escapeHtml(msg.text)}</div>`;
+                }
+
+                msgDiv.innerHTML = `
+                    <div class="chat-meta">
+                        <span>${'$'}{senderName}</span>
+                    </div>
+                    <div class="chat-bubble">
+                        ${'$'}{contentHtml}
+                        <div class="chat-footer">
+                            <span class="chat-time">${'$'}{timeText}</span>
+                            <div class="chat-actions">
+                                <button class="copy-pill">
+                                    <span>📋 Copy</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                history.appendChild(msgDiv);
+
+                const copyBtn = msgDiv.querySelector('.copy-pill');
+                if (copyBtn) {
+                    copyBtn.addEventListener('click', () => copyText(msg.text, copyBtn));
+                }
+            });
+
+            const container = document.getElementById('chatContainer');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        } catch (e) {
+            // ignore network polling error
+        }
+    }
+
     async function sendMessage() {
         const input = document.getElementById('messageText');
         const text = input.value.trim();
         if (!text) return;
+        const btn = document.getElementById('sendBtn');
+        if (btn) btn.disabled = true;
         try {
             const res = await fetch('/api/web/message', {
                 method: 'POST',
@@ -564,15 +837,33 @@ class WebShareManager {
             if (res.ok) {
                 input.value = '';
                 showToast('Message sent to $deviceName!');
+                loadMessages();
             } else {
                 showToast('Failed to send message');
             }
         } catch (e) {
             showToast('Network error');
+        } finally {
+            if (btn) btn.disabled = false;
         }
     }
 
-    // Auto-refresh the list of shared files every 3 seconds so new app files appear instantly
+    const msgInput = document.getElementById('messageText');
+    if (msgInput) {
+        msgInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+
+    // Load initial messages and files
+    loadMessages();
+    loadSharedFiles();
+
+    // Auto-refresh chat messages and shared files every 2.5 seconds
+    setInterval(loadMessages, 2500);
     setInterval(loadSharedFiles, 3000);
 </script>
 

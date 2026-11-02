@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Deselect
 import androidx.compose.material.icons.filled.DesktopMac
 import androidx.compose.material.icons.filled.DesktopWindows
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
@@ -344,6 +345,7 @@ fun ChatScreen(
                                         com.bytegif.sendchat.domain.model.DevicePlatform.WINDOWS -> Icons.Default.DesktopWindows
                                         com.bytegif.sendchat.domain.model.DevicePlatform.MACOS -> Icons.Default.DesktopMac
                                         com.bytegif.sendchat.domain.model.DevicePlatform.LINUX -> Icons.Default.Computer
+                                        com.bytegif.sendchat.domain.model.DevicePlatform.WEBPAGE -> Icons.Default.Language
                                         com.bytegif.sendchat.domain.model.DevicePlatform.UNKNOWN -> Icons.Default.Computer
                                     },
                                     contentDescription = null,

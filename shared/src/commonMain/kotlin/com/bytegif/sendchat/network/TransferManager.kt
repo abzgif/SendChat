@@ -184,6 +184,19 @@ class TransferManager(
         val messageId = UUID.randomUUID().toString()
         val timestamp = System.currentTimeMillis()
 
+        if (targetDevice.id == "web_browser") {
+            val message = Message(
+                id = messageId,
+                deviceId = targetDevice.id,
+                content = MessageContent.Text(text),
+                direction = Direction.SENT,
+                status = TransferStatus.Completed,
+                timestamp = timestamp
+            )
+            messageRepository.insertMessage(message)
+            return true
+        }
+
         val message = Message(
             id = messageId,
             deviceId = targetDevice.id,
@@ -215,6 +228,19 @@ class TransferManager(
         val settings = settingsRepository.getCurrentSettings()
         val messageId = UUID.randomUUID().toString()
         val timestamp = System.currentTimeMillis()
+
+        if (targetDevice.id == "web_browser") {
+            val message = Message(
+                id = messageId,
+                deviceId = targetDevice.id,
+                content = MessageContent.Clipboard(text),
+                direction = Direction.SENT,
+                status = TransferStatus.Completed,
+                timestamp = timestamp
+            )
+            messageRepository.insertMessage(message)
+            return true
+        }
 
         val message = Message(
             id = messageId,
@@ -276,6 +302,20 @@ class TransferManager(
                 mimeType = getMimeType(fileName),
                 fileHash = fileHash
             )
+        }
+
+        if (targetDevice.id == "web_browser") {
+            webShareManager.addFile(filePath)
+            val message = Message(
+                id = transferId,
+                deviceId = targetDevice.id,
+                content = content,
+                direction = Direction.SENT,
+                status = TransferStatus.Completed,
+                timestamp = timestamp
+            )
+            messageRepository.insertMessage(message)
+            return true
         }
 
         val message = Message(

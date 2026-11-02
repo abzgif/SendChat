@@ -8,6 +8,7 @@ enum class DevicePlatform {
     WINDOWS,
     MACOS,
     LINUX,
+    WEBPAGE,
     UNKNOWN;
 
     val displayName: String
@@ -16,12 +17,15 @@ enum class DevicePlatform {
             WINDOWS -> "Windows"
             MACOS -> "macOS"
             LINUX -> "Linux"
+            WEBPAGE -> "Webpage"
             UNKNOWN -> "Unknown"
         }
 
     companion object {
         fun fromString(value: String): DevicePlatform {
-            return entries.firstOrNull { it.name.equals(value, ignoreCase = true) } ?: UNKNOWN
+            return entries.firstOrNull { it.name.equals(value, ignoreCase = true) }
+                ?: if (value.equals("web", true) || value.equals("webpage", true) || value.equals("web_browser", true)) WEBPAGE
+                else UNKNOWN
         }
     }
 }
@@ -53,15 +57,15 @@ data class PairedDevice(
     val autoSyncClipboard: Boolean = false,
     val isMuted: Boolean = false
 ) {
-    fun toDevice(isOnline: Boolean = false): Device = Device(
+    fun toDevice(isOnline: Boolean = (id == "web_browser")): Device = Device(
         id = id,
         name = name,
-        platform = platform,
+        platform = if (id == "web_browser") DevicePlatform.WEBPAGE else platform,
         ip = lastKnownIp,
         port = lastKnownPort,
         publicKeyFingerprint = publicKeyFingerprint,
         isPaired = true,
-        isOnline = isOnline,
+        isOnline = if (id == "web_browser") true else isOnline,
         lastSeen = pairedAt,
         autoSyncClipboard = autoSyncClipboard,
         isMuted = isMuted

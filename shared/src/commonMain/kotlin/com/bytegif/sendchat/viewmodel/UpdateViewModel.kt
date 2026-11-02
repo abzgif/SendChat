@@ -20,7 +20,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
-const val DEFAULT_APP_VERSION = "1.1.7"
+const val DEFAULT_APP_VERSION = "1.1.8"
 
 expect object AppVersion {
     val current: String
@@ -163,6 +163,7 @@ class UpdateViewModel {
             DevicePlatform.MACOS -> listOf("pkg", "dmg")
             DevicePlatform.WINDOWS -> listOf("msi", "exe")
             DevicePlatform.LINUX -> listOf("deb", "rpm")
+            DevicePlatform.WEBPAGE -> emptyList()
             DevicePlatform.UNKNOWN -> emptyList()
         }
 

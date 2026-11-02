@@ -35,9 +35,9 @@ jobs:
         run: |
           if ($env:GITHUB_REF_TYPE -eq "tag") {
             $version = $env:GITHUB_REF_NAME -replace '^v', ''
-            ./gradlew.bat :desktopApp:packageExe :desktopApp:packageMsi "-PappVersion=$version" --stacktrace
+            ./gradlew.bat :desktopApp:packageReleaseExe :desktopApp:packageReleaseMsi "-PappVersion=$version" --stacktrace
           } else {
-            ./gradlew.bat :desktopApp:packageExe :desktopApp:packageMsi --stacktrace
+            ./gradlew.bat :desktopApp:packageReleaseExe :desktopApp:packageReleaseMsi --stacktrace
           }
         shell: pwsh
 
@@ -74,9 +74,9 @@ jobs:
       - name: Package macOS DMG and PKG
         run: |
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            ./gradlew :desktopApp:packageDmg :desktopApp:packagePkg "-PappVersion=${GITHUB_REF_NAME#v}" --stacktrace
+            ./gradlew :desktopApp:packageReleaseDmg :desktopApp:packageReleasePkg "-PappVersion=${GITHUB_REF_NAME#v}" --stacktrace
           else
-            ./gradlew :desktopApp:packageDmg :desktopApp:packagePkg --stacktrace
+            ./gradlew :desktopApp:packageReleaseDmg :desktopApp:packageReleasePkg --stacktrace
           fi
 
       - name: Upload macOS DMG Artifact
@@ -117,9 +117,9 @@ jobs:
       - name: Package Linux DEB and RPM
         run: |
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            ./gradlew :desktopApp:packageDeb :desktopApp:packageRpm "-PappVersion=${GITHUB_REF_NAME#v}" --stacktrace
+            ./gradlew :desktopApp:packageReleaseDeb :desktopApp:packageReleaseRpm "-PappVersion=${GITHUB_REF_NAME#v}" --stacktrace
           else
-            ./gradlew :desktopApp:packageDeb :desktopApp:packageRpm --stacktrace
+            ./gradlew :desktopApp:packageReleaseDeb :desktopApp:packageReleaseRpm --stacktrace
           fi
 
       - name: Upload Linux Packages
@@ -163,10 +163,11 @@ jobs:
           body: |
             ### SendChat ${{ github.ref_name }} Release Notes
 
-            - **🌐 Local Web Share**: Zero-install browser sharing via QR code and local web portal (`http://<ip>:42831`). Connect from iPhones, iPads, Android devices, or PCs without installing SendChat.
-            - **⚡ App-to-Web File Sharing & Streaming**: Fast, direct local file streaming and instant downloads in any web browser.
-            - **🎨 UI Polish & Layout Enhancements**: Balanced top app bar sizing, live online status indicators, and responsive desktop two-pane layout.
-            - **🛠️ Stability & Performance**: Enhanced peer discovery, Android 14+ permission handling, and optimized native desktop builds across macOS, Windows, and Linux.
+            - **📉 App Size Optimization**: JLink ZIP compression configured for runtime modules, stripping unneeded runtime overhead across Windows, macOS, and Linux (~25MB module footprint reduction), and optimized Android packaging with R8 full mode.
+            - **💬 App-to-Web File & Message Transfers**: Seamlessly send text messages, clipboard snippets, images, and files directly from the SendChat "Web Browser" chat room to connected browsers.
+            - **🌐 Enhanced Web Portal Chat**: Redesigned "Send Text" tab with full sent and received message bubbles, 12-hour timestamps, and one-click copy buttons with instant visual feedback.
+            - **🟢 Active Webpage Status & Identification**: Web sessions now clearly show as "Webpage • <IP>" with live active status indicators instead of "Unknown / Offline".
+            - **🛠️ Stability & Polish**: Fixes for connection timeouts and delivery errors when chatting with web clients.
           files: |
             artifacts/**/*.exe
             artifacts/**/*.msi

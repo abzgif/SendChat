@@ -61,15 +61,16 @@ class DeviceRepositoryImpl(
                         isMuted = paired.isMuted
                     )
                 } else if (paired != null) {
+                    val isWeb = paired.id == "web_browser"
                     Device(
                         id = paired.id,
                         name = paired.name,
-                        platform = paired.platform,
+                        platform = if (isWeb) DevicePlatform.WEBPAGE else paired.platform,
                         ip = paired.lastKnownIp,
                         port = paired.lastKnownPort,
                         publicKeyFingerprint = paired.publicKeyFingerprint,
                         isPaired = true,
-                        isOnline = false,
+                        isOnline = if (isWeb) true else false,
                         lastSeen = paired.pairedAt,
                         autoSyncClipboard = paired.autoSyncClipboard,
                         isMuted = paired.isMuted
@@ -183,10 +184,11 @@ class DeviceRepositoryImpl(
     }
 
     private fun Paired_device_entity.toDomain(): PairedDevice {
+        val isWeb = id == "web_browser"
         return PairedDevice(
             id = id,
             name = name,
-            platform = DevicePlatform.fromString(platform),
+            platform = if (isWeb) DevicePlatform.WEBPAGE else DevicePlatform.fromString(platform),
             publicKeyFingerprint = publicKeyFingerprint,
             lastKnownIp = lastKnownIp,
             lastKnownPort = lastKnownPort.toInt(),

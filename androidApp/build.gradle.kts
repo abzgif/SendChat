@@ -5,10 +5,10 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
-val appVersion = providers.gradleProperty("appVersion").orElse("1.1.7").get()
+val appVersion = providers.gradleProperty("appVersion").orElse("1.1.8").get()
 val appVersionCode = providers.gradleProperty("appVersionCode")
-    .map { it.toIntOrNull() ?: 8 }
-    .orElse(8)
+    .map { it.toIntOrNull() ?: 9 }
+    .orElse(9)
     .get()
 
 android {
@@ -48,6 +48,10 @@ android {
             excludes += listOf(
                 "/META-INF/{AL2.0,LGPL2.1}",
                 "/META-INF/INDEX.LIST",
+                "/META-INF/DEPENDENCIES",
+                "/META-INF/LICENSE*",
+                "/META-INF/NOTICE*",
+                "META-INF/*.version",
                 "META-INF/*.kotlin_module",
                 "**/*.dll",
                 "**/*.jnilib"
